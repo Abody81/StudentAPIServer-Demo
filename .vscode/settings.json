@@ -1,0 +1,5 @@
+{
+  "csharp.debug.console": "externalTerminal",
+  // "terminal.external.linuxExec": "konsole",
+  // "terminal.integrated.defaultProfile.linux": "bash"
+}

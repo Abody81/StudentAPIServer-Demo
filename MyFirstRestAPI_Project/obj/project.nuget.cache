@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "dgSpecHash": "xifinC3E5Gc=",
+  "success": true,
+  "projectFilePath": "/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/MyFirstRestAPI_Project.csproj",
+  "expectedPackageFiles": [
+    "/home/abody81/.nuget/packages/bcrypt.net-next/4.2.0/bcrypt.net-next.4.2.0.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/11.0.0-rc.2.26504.105/microsoft.aspnetcore.authentication.jwtbearer.11.0.0-rc.2.26504.105.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.aspnetcore.authorization/11.0.0-rc.2.26504.105/microsoft.aspnetcore.authorization.11.0.0-rc.2.26504.105.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.aspnetcore.openapi/11.0.0-rc.2.26504.105/microsoft.aspnetcore.openapi.11.0.0-rc.2.26504.105.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.bcl.cryptography/10.0.2/microsoft.bcl.cryptography.10.0.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.abstractions/8.19.2/microsoft.identitymodel.abstractions.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.jsonwebtokens/8.19.2/microsoft.identitymodel.jsonwebtokens.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.logging/8.19.2/microsoft.identitymodel.logging.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.protocols/8.19.2/microsoft.identitymodel.protocols.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.protocols.openidconnect/8.19.2/microsoft.identitymodel.protocols.openidconnect.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.identitymodel.tokens/8.19.2/microsoft.identitymodel.tokens.8.19.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/microsoft.openapi/3.10.2/microsoft.openapi.3.10.2.nupkg.sha512",
+    "/home/abody81/.nuget/packages/scalar.aspnetcore/2.18.0/scalar.aspnetcore.2.18.0.nupkg.sha512",
+    "/home/abody81/.nuget/packages/system.identitymodel.tokens.jwt/8.19.2/system.identitymodel.tokens.jwt.8.19.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference Microsoft.AspNetCore.Authorization will not be pruned. This package is automatically available and does not need to be referenced explicitly. Remove the PackageReference item.",
+      "projectPath": "/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/MyFirstRestAPI_Project.csproj",
+      "warningLevel": 1,
+      "filePath": "/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/MyFirstRestAPI_Project.csproj",
+      "libraryId": "Microsoft.AspNetCore.Authorization",
+      "targetGraphs": [
+        "net11.0"
+      ]
+    }
+  ]
+}
