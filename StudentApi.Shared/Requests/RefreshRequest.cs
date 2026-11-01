@@ -1,3 +1,3 @@
 namespace StudentApi.Shared.Requests;
 
-public record RefreshRequest(string RefreshToken, string Email);
+public record RefreshRequest(int Id, string RefreshToken);

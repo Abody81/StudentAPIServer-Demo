@@ -58,10 +58,6 @@
               "target": "Package",
               "version": "[11.0.0-rc.2.26504.105, )"
             },
-            "Microsoft.AspNetCore.Authorization": {
-              "target": "Package",
-              "version": "[11.0.0-rc.2.26504.105, )"
-            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[11.0.0-rc.2.26504.105, )"

@@ -7,6 +7,7 @@ using StudentApi.DataSimulation;
 using StudentApi.Shared.Requests;
 using System.Security.Cryptography;
 using StudentApi.Shared.Responses;
+using MyFirstRestAPI_Project.Models;
 
 namespace MyFirstRestAPI_Project.Controllers;
 
@@ -22,21 +23,8 @@ public class AuthController : ControllerBase
         return Convert.ToBase64String(bytes);
     }
 
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    private static LoginResponse IssueNewToken(Student student)
     {
-        var student = StudentDataSimulation.StudentsList
-            .FirstOrDefault(s => s.Email == request.Email);
-
-        if (student == null)
-            return Unauthorized("Invalid credentials");
-
-        bool isValidPassword =
-                BCrypt.Net.BCrypt.Verify(request.Password, student.PasswordHash);
-
-        if (!isValidPassword)
-            return Unauthorized("Invalid credentials");
-
         var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, student.Id.ToString()),
@@ -55,7 +43,8 @@ public class AuthController : ControllerBase
                 issuer: "StudentApi",
                 audience: "StudentApiUsers",
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.UtcNow.AddMinutes(15),
+                //expires: DateTime.UtcNow.AddMinutes(1),
                 signingCredentials: creds
             );
 
@@ -68,12 +57,69 @@ public class AuthController : ControllerBase
         student.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
         student.RefreshTokenRevokedAt = null;
 
-        return Ok(new LoginResponse
+        return new LoginResponse
         (
             AccessToken: accessToken,
             RefreshToken: refreshToken
-        ));
-
+        );
     }
 
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginRequest request)
+    {
+        var student = StudentDataSimulation.StudentsList
+            .FirstOrDefault(s => s.Email == request.Email);
+
+        if (student == null)
+            return Unauthorized("Invalid credentials");
+
+        bool isValidPassword =
+                BCrypt.Net.BCrypt.Verify(request.Password, student.PasswordHash);
+
+        if (!isValidPassword)
+            return Unauthorized("Invalid credentials");
+
+        return Ok(IssueNewToken(student));
+    }
+
+    [HttpPost("refresh")]
+    public IActionResult Refresh([FromBody] RefreshRequest request)
+    {
+        var student = StudentDataSimulation.StudentsList
+            .FirstOrDefault(s => s.Id == request.Id);
+
+        if (student == null)
+            return Unauthorized("Invalid refresh request");
+
+        if (student.RefreshTokenRevokedAt != null)
+            return Unauthorized("Refresh token is revoked");
+
+        if (student.RefreshTokenExpiresAt <= DateTime.UtcNow)
+            return Unauthorized("Refresh token expired");
+
+        bool refreshValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, student.RefreshTokenHash);
+        if (!refreshValid)
+            return Unauthorized("Invalid refresh token");
+
+        // Issue NEW access token (same claims & signing settings as login)
+        return Ok(IssueNewToken(student));
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout([FromBody] LogoutRequest request)
+    {
+        var student = StudentDataSimulation.StudentsList
+            .FirstOrDefault(s => s.Id == request.Id);
+
+        if (student == null)
+            return Ok(); // Do not reveal if user exists
+
+        bool refreshValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, student.RefreshTokenHash);
+        if (!refreshValid)
+            return Ok();
+
+        student.RefreshTokenRevokedAt = DateTime.UtcNow;
+        
+        return Ok();
+    }
 }

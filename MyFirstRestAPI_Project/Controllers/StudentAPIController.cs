@@ -27,10 +27,8 @@ namespace StudentApi.Controllers
 
         [Authorize(Roles = "Student")]
         [HttpGet("Passed", Name = "GetPassedStudents")]
-
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-
         public ActionResult<IEnumerable<Student>> GetPassedStudents()
         {
             var passedStudents = StudentDataSimulation.StudentsList.Where(student => student.Grade >= 50).ToList();
@@ -45,12 +43,11 @@ namespace StudentApi.Controllers
             return Ok(passedStudents.Select(ToDto).ToList());
         }
 
+
         [AllowAnonymous]
         [HttpGet("AverageGrade", Name = "GetAverageGrade")]
-
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-
         public ActionResult<double> GetAverageGrade()
         {
 

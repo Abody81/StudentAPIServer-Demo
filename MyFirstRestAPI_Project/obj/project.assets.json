@@ -30,19 +30,6 @@
           "Microsoft.AspNetCore.App"
         ]
       },
-      "Microsoft.AspNetCore.Authorization/11.0.0-rc.2.26504.105": {
-        "type": "package",
-        "compile": {
-          "lib/net11.0/_._": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net11.0/_._": {
-            "related": ".xml"
-          }
-        }
-      },
       "Microsoft.AspNetCore.OpenApi/11.0.0-rc.2.26504.105": {
         "type": "package",
         "dependencies": {
@@ -274,25 +261,6 @@
         "lib/net11.0/Microsoft.AspNetCore.Authentication.JwtBearer.xml",
         "microsoft.aspnetcore.authentication.jwtbearer.11.0.0-rc.2.26504.105.nupkg.sha512",
         "microsoft.aspnetcore.authentication.jwtbearer.nuspec"
-      ]
-    },
-    "Microsoft.AspNetCore.Authorization/11.0.0-rc.2.26504.105": {
-      "sha512": "di7QRMkHfw91FIGHS35S6oBNOj2b/ifmEqauZpCOLgQbMXK2qnCJ8llNdRlKJsTGXLCJAoEcI+dJmia1Tp/Hrg==",
-      "type": "package",
-      "path": "microsoft.aspnetcore.authorization/11.0.0-rc.2.26504.105",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "THIRD-PARTY-NOTICES.TXT",
-        "lib/net11.0/Microsoft.AspNetCore.Authorization.dll",
-        "lib/net11.0/Microsoft.AspNetCore.Authorization.xml",
-        "lib/net462/Microsoft.AspNetCore.Authorization.dll",
-        "lib/net462/Microsoft.AspNetCore.Authorization.xml",
-        "lib/netstandard2.0/Microsoft.AspNetCore.Authorization.dll",
-        "lib/netstandard2.0/Microsoft.AspNetCore.Authorization.xml",
-        "microsoft.aspnetcore.authorization.11.0.0-rc.2.26504.105.nupkg.sha512",
-        "microsoft.aspnetcore.authorization.nuspec"
       ]
     },
     "Microsoft.AspNetCore.OpenApi/11.0.0-rc.2.26504.105": {
@@ -573,7 +541,6 @@
     "net11.0": [
       "BCrypt.Net-Next >= 4.2.0",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 11.0.0-rc.2.26504.105",
-      "Microsoft.AspNetCore.Authorization >= 11.0.0-rc.2.26504.105",
       "Microsoft.AspNetCore.OpenApi >= 11.0.0-rc.2.26504.105",
       "Scalar.AspNetCore >= 2.18.0",
       "StudentApi.Shared >= 1.0.0",
@@ -634,10 +601,6 @@
             "version": "[4.2.0, )"
           },
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
-            "target": "Package",
-            "version": "[11.0.0-rc.2.26504.105, )"
-          },
-          "Microsoft.AspNetCore.Authorization": {
             "target": "Package",
             "version": "[11.0.0-rc.2.26504.105, )"
           },
@@ -1118,17 +1081,5 @@
         }
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1510",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "PackageReference Microsoft.AspNetCore.Authorization will not be pruned. This package is automatically available and does not need to be referenced explicitly. Remove the PackageReference item.",
-      "libraryId": "Microsoft.AspNetCore.Authorization",
-      "targetGraphs": [
-        "net11.0"
-      ]
-    }
-  ]
+  }
 }

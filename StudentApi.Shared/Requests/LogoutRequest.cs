@@ -1,3 +1,3 @@
 namespace StudentApi.Shared.Requests;
 
-public record LogoutRequest(string Email, string RefreshToken);
+public record LogoutRequest(int Id, string RefreshToken);
