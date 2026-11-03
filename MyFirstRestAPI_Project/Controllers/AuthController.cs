@@ -43,8 +43,8 @@ public class AuthController : ControllerBase
                 issuer: "StudentApi",
                 audience: "StudentApiUsers",
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
-                //expires: DateTime.UtcNow.AddMinutes(1),
+                //expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTime.UtcNow.AddMinutes(2),
                 signingCredentials: creds
             );
 
@@ -60,7 +60,8 @@ public class AuthController : ControllerBase
         return new LoginResponse
         (
             AccessToken: accessToken,
-            RefreshToken: refreshToken
+            RefreshToken: refreshToken,
+            UserId: student.Id
         );
     }
 

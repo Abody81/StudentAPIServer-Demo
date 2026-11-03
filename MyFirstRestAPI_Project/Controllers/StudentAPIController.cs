@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using StudentApi.DataSimulation;
 using Microsoft.AspNetCore.Authorization;
 using StudentApi.Shared;
+using StudentApi.Shared.Requests;
 using MyFirstRestAPI_Project.Models;
 namespace StudentApi.Controllers
 {
@@ -95,15 +96,25 @@ namespace StudentApi.Controllers
         [HttpPost(Name = "AddStudent")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<Student> AddStudent(Student newStudent)
+        public ActionResult<Student> AddStudent(CreateStudentRequest request)
         {
             //we validate the data here
-            if (newStudent == null || string.IsNullOrEmpty(newStudent.Name) || newStudent.Age < 0 || newStudent.Grade < 0)
+            if (request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
             {
                 return BadRequest("Invalid student data.");
             }
 
-            newStudent.Id = StudentDataSimulation.StudentsList.Count > 0 ? StudentDataSimulation.StudentsList.Max(s => s.Id) + 1 : 1;
+            var newStudent = new Student
+            {
+                Id = StudentDataSimulation.StudentsList.Count > 0 ? StudentDataSimulation.StudentsList.Max(s => s.Id) + 1 : 1,
+                Name = request.Name,
+                Age = request.Age,
+                Grade = request.Grade,
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = request.Role
+            };
+
             StudentDataSimulation.StudentsList.Add(newStudent);
 
             //we dont return Ok here,we return createdAtRoute: this will be status code 201 created.

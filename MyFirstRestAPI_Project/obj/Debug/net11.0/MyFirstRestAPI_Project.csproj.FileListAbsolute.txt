@@ -42,10 +42,7 @@
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/jsmodules/jsmodules.build.manifest.json
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/scopedcss/scopedcss.cache
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/scopedcss/bundle/MyFirstRestAPI_Project.styles.css
-/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/o9yxun46rn-{0}-40912ckq1d-40912ckq1d.gz
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/4fuflfeul5-{0}-duwyom8u5p-duwyom8u5p.gz
-/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/9mf46e59xr-{0}-q85t05f486-q85t05f486.gz
-/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/5lbx4pljj3-{0}-2eb79amwet-2eb79amwet.gz
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/staticwebassets.build.json
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/staticwebassets.build.json.cache
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/staticwebassets.development.json
@@ -57,3 +54,6 @@
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/MyFirstRestAPI_Project.pdb
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/MyFirstRestAPI_Project.genruntimeconfig.cache
 /home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/ref/MyFirstRestAPI_Project.dll
+/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/o9yxun46rn-{0}-hqo693b3q6-hqo693b3q6.gz
+/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/9mf46e59xr-{0}-jwlm3nvk20-jwlm3nvk20.gz
+/home/abody81/Downloads/01 StudentAPIServer v7/MyFirstRestAPI_Project/obj/Debug/net11.0/compressed/5lbx4pljj3-{0}-4bxsclt4mp-4bxsclt4mp.gz
