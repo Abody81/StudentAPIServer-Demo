@@ -8,13 +8,17 @@ using StudentApi.Shared.Requests;
 using System.Security.Cryptography;
 using StudentApi.Shared.Responses;
 using MyFirstRestAPI_Project.Models;
+using Microsoft.Extensions.Options;
+using MyFirstRestAPI_Project.Settings;
 
 namespace MyFirstRestAPI_Project.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
 {
+    private readonly JwtSettings _jwt = jwtSettings.Value;
+
     private static string GenerateRefreshToken()
     {
         var bytes = new byte[64];
@@ -23,28 +27,27 @@ public class AuthController : ControllerBase
         return Convert.ToBase64String(bytes);
     }
 
-    private static LoginResponse IssueNewToken(Student student)
+    private LoginResponse IssueNewToken(Student student)
     {
         var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, student.Id.ToString()),
 
-                new Claim("Email", student.Email),
+                new Claim(ClaimTypes.Email, student.Email),
 
                 new Claim(ClaimTypes.Role, student.Role)
             };
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes("THIS_IS_A_VERY_SECRET_KEY_123456"));
+            Encoding.UTF8.GetBytes(_jwt.Key));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-                issuer: "StudentApi",
-                audience: "StudentApiUsers",
+                issuer: _jwt.Issuer,
+                audience: _jwt.Audience,
                 claims: claims,
-                //expires: DateTime.UtcNow.AddMinutes(15),
-                expires: DateTime.UtcNow.AddMinutes(2),
+                expires: DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpireMinutes),
                 signingCredentials: creds
             );
 
@@ -54,7 +57,7 @@ public class AuthController : ControllerBase
 
         // Store refresh token securely (hash + expiry + not revoked)
         student.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(refreshToken);
-        student.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+        student.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpireDays);
         student.RefreshTokenRevokedAt = null;
 
         return new LoginResponse
