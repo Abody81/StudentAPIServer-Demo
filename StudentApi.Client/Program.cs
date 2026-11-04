@@ -21,4 +21,4 @@ var writeService = new StudentWriteService(apiClient);
 
 var menu = new ConsoleMenu(state, authService, refreshService, readService, writeService);
 
-await menu.RunAsync();
+await menu.RunAsync(); 
