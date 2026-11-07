@@ -1,5 +1,6 @@
 {
   "csharp.debug.console": "externalTerminal",
+  "dotnet.defaultSolution": "StudentApi.sln",
   // "terminal.external.linuxExec": "konsole",
   // "terminal.integrated.defaultProfile.linux": "bash"
 }

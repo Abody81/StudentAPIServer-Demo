@@ -11,7 +11,7 @@
       "name": "Client",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/StudentApi.Client/StudentApi.Client.csproj"
+      "projectPath": "${workspaceFolder}/StudentFrontend/Console/Console.csproj"
     }
   ],
   "compounds": [

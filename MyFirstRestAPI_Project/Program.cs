@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MyFirstRestAPI_Project.Authorization;
 using MyFirstRestAPI_Project.Settings;
 using Scalar.AspNetCore;
-using System.Collections.Generic;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +17,8 @@ builder.Services.AddOptions<JwtSettings>()
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 
 builder.Services.AddControllers();
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddOpenApi(options =>
 {
@@ -88,5 +88,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();

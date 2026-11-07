@@ -15,7 +15,7 @@ namespace StudentApi.Controllers
         [HttpGet("All", Name = "GetAllStudents")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<IEnumerable<Student>> GetAllStudents()
+        public ActionResult<IEnumerable<StudentDto>> GetAllStudents()
         {
             //StudentDataSimulation.StudentsList.Clear();
 
@@ -30,7 +30,7 @@ namespace StudentApi.Controllers
         [HttpGet("Passed", Name = "GetPassedStudents")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<IEnumerable<Student>> GetPassedStudents()
+        public ActionResult<IEnumerable<StudentDto>> GetPassedStudents()
         {
             var passedStudents = StudentDataSimulation.StudentsList.Where(student => student.Grade >= 50).ToList();
             //passedStudents.Clear();
@@ -96,7 +96,7 @@ namespace StudentApi.Controllers
         [HttpPost(Name = "AddStudent")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<Student> AddStudent(CreateStudentRequest request)
+        public ActionResult<StudentDto> AddStudent(CreateStudentRequest request)
         {
             //we validate the data here
             if (request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
@@ -150,7 +150,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Student> UpdateStudent(int id, Student updatedStudent)
+        public ActionResult<StudentDto> UpdateStudent(int id, Student updatedStudent)
         {
             if (id < 1 || updatedStudent == null || string.IsNullOrEmpty(updatedStudent.Name) || updatedStudent.Age < 0 || updatedStudent.Grade < 0)
             {
