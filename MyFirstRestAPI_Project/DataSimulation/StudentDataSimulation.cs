@@ -43,6 +43,26 @@ namespace StudentApi.DataSimulation
                 Age = 19,
                 Grade = 44,
                 Email = "alia.maher@admin.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Alia123"),
+                Role = "Admin"
+            },
+            new Student
+            {
+                Id = 5,
+                Name = "Student Student",
+                Age = 19,
+                Grade = 44,
+                Email = "S@g.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("s123"),
+                Role = "Student"
+            },
+            new Student
+            {
+                Id = 6,
+                Name = "Admin Admin",
+                Age = 19,
+                Grade = 44,
+                Email = "A@g.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                 Role = "Admin"
             }

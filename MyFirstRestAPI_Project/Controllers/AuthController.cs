@@ -10,6 +10,7 @@ using StudentApi.Shared.Responses;
 using MyFirstRestAPI_Project.Models;
 using Microsoft.Extensions.Options;
 using MyFirstRestAPI_Project.Settings;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace MyFirstRestAPI_Project.Controllers;
 
@@ -69,7 +70,8 @@ public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [EnableRateLimiting("AuthLimiter")]
+    public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
     {
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Email == request.Email);
@@ -87,7 +89,8 @@ public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
     }
 
     [HttpPost("refresh")]
-    public IActionResult Refresh([FromBody] RefreshRequest request)
+    [EnableRateLimiting("AuthLimiter")]
+    public ActionResult<LoginResponse> Refresh([FromBody] RefreshRequest request)
     {
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Id == request.Id);

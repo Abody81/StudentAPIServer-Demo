@@ -6,6 +6,8 @@ using MyFirstRestAPI_Project.Authorization;
 using MyFirstRestAPI_Project.Settings;
 using Scalar.AspNetCore;
 using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +78,39 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<IAuthorizationHandler, StudentOwnerOrAdminHandler>();
 
+builder.Services.AddRateLimiter(options =>
+{
+    // Called by the rate-limiting middleware the moment a request is rejected.
+    // It replaces the old custom middleware that inspected the status code
+    // after the whole pipeline had already run.
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsync(
+            "Too many requests. Please try again later.", cancellationToken);
+    };
+
+    options.AddPolicy("AuthLimiter", httpContext =>
+    {
+        string ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        // FIXED window -> SLIDING window:
+        // the fixed window forgets everything at the window boundary, allowing a
+        // burst of ~2x the limit in seconds (verified by RateLimitProbe).
+        // The sliding window remembers the last 60 seconds, closing that hole.
+        return RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 5,
+                QueueLimit = 0
+            });
+    });
+});
+
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -85,6 +120,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
