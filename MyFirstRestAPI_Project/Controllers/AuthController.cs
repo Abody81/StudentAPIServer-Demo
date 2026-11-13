@@ -16,6 +16,7 @@ namespace MyFirstRestAPI_Project.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("ApiLimiter")]
 public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
 {
     private readonly JwtSettings _jwt = jwtSettings.Value;

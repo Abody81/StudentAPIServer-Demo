@@ -6,6 +6,7 @@ using MyFirstRestAPI_Project.Authorization;
 using MyFirstRestAPI_Project.Settings;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Security.Claims;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
@@ -108,6 +109,49 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             });
     });
+
+    // General/light data endpoints (reserved for future use): token bucket
+    // per authenticated user. The burst ceiling (TokenLimit=20) absorbs the
+    // legitimate burst of an app starting up, while the steady refill
+    // (1 token / 2s = 30/min) caps sustained abuse.
+    options.AddPolicy("ApiLimiter", httpContext =>
+    {
+        var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var key = userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: key,
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 15,
+                TokensPerPeriod = 1,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(2),
+                AutoReplenishment = true,
+                QueueLimit = 0
+            });
+    });
+
+    // HEAVY endpoints (e.g. GetAllStudents - full unbounded list): a tight budget
+    // of ~10 requests per 5 minutes that CANNOT be spent in one burst.
+    // Token bucket: the bucket size (TokenLimit) caps the instantaneous burst
+    // at 2, while the steady refill (1 token per 30s) sustains ~10 per 5 min.
+    // Idling never accumulates more than TokenLimit tokens.
+    options.AddPolicy("HeavyLimiter", httpContext =>
+    {
+        var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var key = userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: key,
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 2,
+                TokensPerPeriod = 1,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(25),
+                AutoReplenishment = true,
+                QueueLimit = 0
+            });
+    });
 });
 
 
@@ -120,8 +164,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
+// Rate limiter must run AFTER authentication: the ApiLimiter policy partitions
+// by authenticated user id, which is only available once auth has populated
+// httpContext.User.
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 

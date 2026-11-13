@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentApi.DataSimulation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using StudentApi.Shared;
 using StudentApi.Shared.Requests;
 using MyFirstRestAPI_Project.Models;
@@ -8,10 +9,12 @@ namespace StudentApi.Controllers
 {
     [Authorize]
     [ApiController]
+    [EnableRateLimiting("ApiLimiter")]
     [Route("api/Students")]
     public class StudentsController(IAuthorizationService authorizationService) : ControllerBase
     {
         [Authorize(Roles = "Admin")]
+        [EnableRateLimiting("HeavyLimiter")]
         [HttpGet("All", Name = "GetAllStudents")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
