@@ -13,11 +13,5 @@
       "request": "launch",
       "projectPath": "${workspaceFolder}/StudentFrontend/Console/Console.csproj"
     }
-  ],
-  "compounds": [
-    {
-      "name": "API + Client",
-      "configurations": ["API", "Client"]
-    }
   ]
 }

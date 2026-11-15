@@ -17,7 +17,7 @@ namespace MyFirstRestAPI_Project.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [EnableRateLimiting("ApiLimiter")]
-public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
+public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthController> logger) : ControllerBase
 {
     private readonly JwtSettings _jwt = jwtSettings.Value;
 
@@ -74,18 +74,31 @@ public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
     [EnableRateLimiting("AuthLimiter")]
     public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
     {
+        // Audit rule: log identifiers (email, IP) and the outcome only -
+        // NEVER the attempted password or the issued tokens.
+        // The response stays identical for both failures, but the log tells
+        // us which one it was - that is the whole point of an audit trail.
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Email == request.Email);
-
+    
         if (student == null)
+        {
+            logger.LogWarning("Login FAILED: unknown email {Email} from {IP}", request.Email, ip);
             return Unauthorized("Invalid credentials");
+        }
 
         bool isValidPassword =
                 BCrypt.Net.BCrypt.Verify(request.Password, student.PasswordHash);
 
         if (!isValidPassword)
+        {
+            logger.LogWarning("Login FAILED: invalid password for {Email} from {IP}", request.Email, ip);
             return Unauthorized("Invalid credentials");
+        }
 
+        logger.LogInformation("Login OK for user {UserId} ({Email}) from {IP}", student.Id, student.Email, ip);
         return Ok(IssueNewToken(student));
     }
 
@@ -93,23 +106,39 @@ public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
     [EnableRateLimiting("AuthLimiter")]
     public ActionResult<LoginResponse> Refresh([FromBody] RefreshRequest request)
     {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Id == request.Id);
 
         if (student == null)
+        {
+            logger.LogWarning("Refresh FAILED: unknown user {UserId} from {IP}", request.Id, ip);
             return Unauthorized("Invalid refresh request");
+        }
 
         if (student.RefreshTokenRevokedAt != null)
+        {
+            // Using a token that was already revoked at logout is suspicious.
+            logger.LogWarning("Refresh FAILED: revoked token for user {UserId} from {IP}", student.Id, ip);
             return Unauthorized("Refresh token is revoked");
+        }
 
         if (student.RefreshTokenExpiresAt <= DateTime.UtcNow)
+        {
+            logger.LogWarning("Refresh FAILED: expired token for user {UserId} from {IP}", student.Id, ip);
             return Unauthorized("Refresh token expired");
+        }
 
         bool refreshValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, student.RefreshTokenHash);
         if (!refreshValid)
+        {
+            logger.LogWarning("Refresh FAILED: invalid token for user {UserId} from {IP}", student.Id, ip);
             return Unauthorized("Invalid refresh token");
+        }
 
         // Issue NEW access token (same claims & signing settings as login)
+        logger.LogInformation("Token rotated for user {UserId} from {IP}", student.Id, ip);
         return Ok(IssueNewToken(student));
     }
 
@@ -127,7 +156,9 @@ public class AuthController(IOptions<JwtSettings> jwtSettings) : ControllerBase
             return Ok();
 
         student.RefreshTokenRevokedAt = DateTime.UtcNow;
-        
+
+        logger.LogInformation("Logout for user {UserId}: refresh token revoked", student.Id);
+
         return Ok();
     }
 }

@@ -2,16 +2,21 @@ using Microsoft.AspNetCore.Mvc;
 using StudentApi.DataSimulation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 using StudentApi.Shared;
 using StudentApi.Shared.Requests;
 using MyFirstRestAPI_Project.Models;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.IdentityModel.Tokens;
 namespace StudentApi.Controllers
 {
     [Authorize]
     [ApiController]
     [EnableRateLimiting("ApiLimiter")]
     [Route("api/Students")]
-    public class StudentsController(IAuthorizationService authorizationService) : ControllerBase
+    public class StudentsController(
+        IAuthorizationService authorizationService,
+        ILogger<StudentsController> logger) : ControllerBase
     {
         [Authorize(Roles = "Admin")]
         [EnableRateLimiting("HeavyLimiter")]
@@ -54,9 +59,6 @@ namespace StudentApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<double> GetAverageGrade()
         {
-
-            //   StudentDataSimulation.StudentsList.Clear();
-
             if (StudentDataSimulation.StudentsList.Count == 0)
             {
                 return NotFound("No students found.");
@@ -84,7 +86,13 @@ namespace StudentApi.Controllers
             id,
             "StudentOwnerOrAdmin");
 
-            if (!authResult.Succeeded) return Forbid();
+            if (!authResult.Succeeded)
+            {
+                // Authorization violation: a non-owner student trying to read
+                // another user's record is a security signal worth an audit line.
+                logger.LogWarning("Access denied: user {Actor} tried to read student {StudentId}", Actor, id);
+                return Forbid();
+            }
 
             var student = StudentDataSimulation.StudentsList.FirstOrDefault(s => s.Id == id);
             if (student == null)
@@ -104,6 +112,7 @@ namespace StudentApi.Controllers
             //we validate the data here
             if (request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
             {
+                logger.LogWarning("Student create REJECTED: invalid data by user {Actor}", Actor);
                 return BadRequest("Invalid student data.");
             }
 
@@ -120,12 +129,15 @@ namespace StudentApi.Controllers
 
             StudentDataSimulation.StudentsList.Add(newStudent);
 
+            logger.LogInformation("Student created: {StudentId} {Name} ({Email}) by user {Actor}",
+                newStudent.Id, newStudent.Name, newStudent.Email, Actor);
+
             //we dont return Ok here,we return createdAtRoute: this will be status code 201 created.
             return CreatedAtRoute("GetStudentById", new { id = newStudent.Id }, ToDto(newStudent));
 
         }
 
-        [Authorize(Roles = "Student")]
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}", Name = "DeleteStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -134,41 +146,62 @@ namespace StudentApi.Controllers
         {
             if (id < 1)
             {
+                logger.LogWarning("Student delete REJECTED: invalid id {StudentId} by user {Actor}", id, Actor);
                 return BadRequest($"Not accepted ID {id}");
             }
 
             var student = StudentDataSimulation.StudentsList.FirstOrDefault(s => s.Id == id);
             if (student == null)
             {
+                // Deleting/updating a non-existent id can be probing.
+                logger.LogWarning("Student delete REJECTED: id {StudentId} not found - user {Actor}", id, Actor);
                 return NotFound($"Student with ID {id} not found.");
             }
 
             StudentDataSimulation.StudentsList.Remove(student);
+
+            logger.LogInformation("Student deleted: {StudentId} {Name} by user {Actor}",
+                id, student.Name, Actor);
+
+            
+
             return Ok($"Student with ID {id} has been deleted.");
+
+            
         }
 
         //here we use http put method for update
-        [Authorize(Roles = "Student")]
+        [Authorize(Roles = "admin")]
         [HttpPut("{id}", Name = "UpdateStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<StudentDto> UpdateStudent(int id, Student updatedStudent)
+        public ActionResult<StudentDto> UpdateStudent(int id, UpdateStudentRequest request)
         {
-            if (id < 1 || updatedStudent == null || string.IsNullOrEmpty(updatedStudent.Name) || updatedStudent.Age < 0 || updatedStudent.Grade < 0)
+            if (id < 1 || request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
             {
+                logger.LogWarning("Student update REJECTED: invalid data (id {StudentId}) by user {Actor}", id, Actor);
                 return BadRequest("Invalid student data.");
             }
 
             var student = StudentDataSimulation.StudentsList.FirstOrDefault(s => s.Id == id);
             if (student == null)
             {
+                logger.LogWarning("Student update REJECTED: id {StudentId} not found - user {Actor}", id, Actor);
                 return NotFound($"Student with ID {id} not found.");
             }
 
-            student.Name = updatedStudent.Name;
-            student.Age = updatedStudent.Age;
-            student.Grade = updatedStudent.Grade;
+            // Capture the old values before overwriting - the audit log
+            // should show WHAT changed, not just that something changed.
+            var (oldName, oldAge, oldGrade) = (student.Name, student.Age, student.Grade);
+
+            student.Name = request.Name;
+            student.Age = request.Age;
+            student.Grade = request.Grade;
+
+            logger.LogInformation(
+                "Student updated: {StudentId} by user {Actor} - name: {OldName} -> {NewName}, age: {OldAge} -> {NewAge}, grade: {OldGrade} -> {NewGrade}",
+                id, Actor, oldName, student.Name, oldAge, student.Age, oldGrade, student.Grade);
 
             return Ok(ToDto(student));
         }
@@ -182,6 +215,11 @@ namespace StudentApi.Controllers
             Email = s.Email,
             Role = s.Role
         };
+
+        // Actor identity for the audit trail, taken from the authenticated
+        // user's claims - the same claims the rate limiter partitions by.
+        private string Actor =>
+            $"{User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous"} ({User.FindFirstValue(ClaimTypes.Role) ?? "no-role"})";
 
     }
 }
