@@ -40,8 +40,8 @@ public sealed class LoggingAuthorizationMiddlewareResultHandler(
             var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
             logger.LogWarning(
-                "Authorization denied ({Status}) on {Path} for user {Identity} from {IP}",
-                status, context.Request.Path, identity, ip);
+                "Authorization denied ({Status}): {Method} {Path} for user {Identity} from {IP}",
+                status, context.Request.Method, context.Request.Path, identity, ip);
         }
 
         await _inner.HandleAsync(next, context, policy, authorizeResult);

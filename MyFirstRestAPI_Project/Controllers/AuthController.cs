@@ -29,6 +29,16 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
         return Convert.ToBase64String(bytes);
     }
 
+    // Privacy: mask the local part of emails (S@g.com -> s***@g.com).
+    // First character + domain stay recognizable so attack patterns
+    // (same target hammered) remain visible in the logs.
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 0) return "***";   // no local part / no '@' at all
+        return $"{email[..2]}***{email[at..]}";
+    }
+
     private LoginResponse IssueNewToken(Student student)
     {
         var claims = new[]
@@ -74,18 +84,19 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
     [EnableRateLimiting("AuthLimiter")]
     public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
     {
-        // Audit rule: log identifiers (email, IP) and the outcome only -
-        // NEVER the attempted password or the issued tokens.
-        // The response stays identical for both failures, but the log tells
-        // us which one it was - that is the whole point of an audit trail.
+        // Audit rule: log identifiers and the outcome only - NEVER the
+        // attempted password or the issued tokens. Emails are MASKED
+        // (s***@g.com): the first character and domain stay recognizable so
+        // attack patterns remain visible, without spreading full PII
+        // through logs, backups and external sinks.
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Email == request.Email);
-    
+
         if (student == null)
         {
-            logger.LogWarning("Login FAILED: unknown email {Email} from {IP}", request.Email, ip);
+            logger.LogWarning("Login FAILED: unknown email {MaskedEmail} from {IP}", MaskEmail(request.Email), ip);
             return Unauthorized("Invalid credentials");
         }
 
@@ -94,11 +105,12 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
 
         if (!isValidPassword)
         {
-            logger.LogWarning("Login FAILED: invalid password for {Email} from {IP}", request.Email, ip);
+            logger.LogWarning("Login FAILED: invalid password for user {UserId} ({MaskedEmail}) from {IP}",
+                student.Id, MaskEmail(student.Email), ip);
             return Unauthorized("Invalid credentials");
         }
 
-        logger.LogInformation("Login OK for user {UserId} ({Email}) from {IP}", student.Id, student.Email, ip);
+        logger.LogInformation("Login OK for user {UserId} from {IP}", student.Id, ip);
         return Ok(IssueNewToken(student));
     }
 
@@ -138,13 +150,15 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
         }
 
         // Issue NEW access token (same claims & signing settings as login)
-        logger.LogInformation("Token rotated for user {UserId} from {IP}", student.Id, ip);
+        logger.LogInformation("Refresh OK: token rotated for user {UserId} from {IP}", student.Id, ip);
         return Ok(IssueNewToken(student));
     }
 
     [HttpPost("logout")]
     public IActionResult Logout([FromBody] LogoutRequest request)
     {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
         var student = StudentDataSimulation.StudentsList
             .FirstOrDefault(s => s.Id == request.Id);
 
@@ -157,7 +171,10 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
 
         student.RefreshTokenRevokedAt = DateTime.UtcNow;
 
-        logger.LogInformation("Logout for user {UserId}: refresh token revoked", student.Id);
+        // A logout from an unusual IP is itself a security signal (stolen
+        // token being killed), so the IP belongs here too.
+        logger.LogInformation("Logout for user {UserId} from {IP}: refresh token revoked",
+            student.Id, ip);
 
         return Ok();
     }

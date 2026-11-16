@@ -129,15 +129,15 @@ namespace StudentApi.Controllers
 
             StudentDataSimulation.StudentsList.Add(newStudent);
 
-            logger.LogInformation("Student created: {StudentId} {Name} ({Email}) by user {Actor}",
-                newStudent.Id, newStudent.Name, newStudent.Email, Actor);
+            logger.LogInformation("Student created: {StudentId} {Name} by user {Actor}",
+                newStudent.Id, newStudent.Name, Actor);
 
             //we dont return Ok here,we return createdAtRoute: this will be status code 201 created.
             return CreatedAtRoute("GetStudentById", new { id = newStudent.Id }, ToDto(newStudent));
 
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}", Name = "DeleteStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -171,7 +171,7 @@ namespace StudentApi.Controllers
         }
 
         //here we use http put method for update
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}", Name = "UpdateStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

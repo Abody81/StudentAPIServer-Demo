@@ -26,9 +26,11 @@ public static class RateLimiterExtensions
                 // RequestServices because this callback runs outside normal DI.
                 var logger = ctx.RequestServices.GetRequiredService<ILogger<Program>>();
                 var userId = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous";
+                var role = ctx.User.FindFirstValue(ClaimTypes.Role);
+                var identity = role is null ? userId : $"{userId} ({role})";
                 var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                logger.LogWarning("Rate limit: {Path} rejected for user {UserId} from {IP}",
-                    ctx.Request.Path, userId, ip);
+                logger.LogWarning("Rate limit: {Method} {Path} rejected for user {Identity} from {IP}",
+                    ctx.Request.Method, ctx.Request.Path, identity, ip);
 
                 ctx.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 await ctx.Response.WriteAsync(

@@ -1,6 +1,8 @@
 {
   "csharp.debug.console": "externalTerminal",
   "dotnet.defaultSolution": "StudentApi.sln",
+  "autoHide.autoHideLeftSideBar": true,
+  "autoHide.hideSideBarsOnDebug": true,
   // "terminal.external.linuxExec": "konsole",
   // "terminal.integrated.defaultProfile.linux": "bash"
 }
