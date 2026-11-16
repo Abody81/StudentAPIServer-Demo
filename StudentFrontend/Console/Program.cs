@@ -32,43 +32,103 @@ catch (TaskCanceledException)
     return;
 }
 
-HttpResponseMessage loginResponse;
-
-while (true)
+// Signs in with the given credentials. Returns the login data, or null on failure
+// (wrong credentials, lost connection or timeout).
+async Task<LoginResponse?> SignInAsync(string email, string password)
 {
-    Console.Write("Email: ");
-    var email = Console.ReadLine()!;
-
-    Console.Write("Password: ");
-    var password = Console.ReadLine()!;
-
     try
     {
-        loginResponse = await client.PostAsJsonAsync("api/auth/login", new LoginRequest(email, password));
+        using var signInResponse = await client.PostAsJsonAsync("api/auth/login", new LoginRequest(email, password));
+
+        if (!signInResponse.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"\nLogin failed: {signInResponse.StatusCode}");
+            var error = await signInResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(error);
+            return null;
+        }
+
+        return await signInResponse.Content.ReadFromJsonAsync<LoginResponse>();
     }
     catch (HttpRequestException)
     {
         Console.WriteLine("\nLost connection to the API server.");
-        return;
+        return null;
     }
     catch (TaskCanceledException)
     {
         Console.WriteLine("\nThe API server stopped responding (timeout).");
-        return;
+        return null;
     }
-
-    if (loginResponse.IsSuccessStatusCode)
-        break;
-
-    Console.WriteLine($"\nLogin failed: {loginResponse.StatusCode}");
-    var error = await loginResponse.Content.ReadAsStringAsync();
-    Console.WriteLine(error + '\n');
 }
 
-var loginData = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+LoginResponse? loginData;
+
+#if DEBUG
+while (true)
+{
+    Console.WriteLine("Development mode: which account do you want to sign in to?");
+    Console.WriteLine("1 = Admin account");
+    Console.WriteLine("2 = Student account");
+    Console.WriteLine("3 = Sign in manually");
+
+    var devChoice = Console.ReadLine();
+
+    string? email = null;
+    string? password = null;
+
+    if (devChoice == "1")
+    {
+        email = "A@g.com";
+        password = "admin123";
+    }
+
+    if (devChoice == "2")
+    {
+        email = "S@g.com";
+        password = "s123";
+    }
+
+    if (devChoice == "3")
+    {
+        Console.Write("Email: ");
+        email = Console.ReadLine();
+
+        Console.Write("Password: ");
+        password = Console.ReadLine();
+    }
+
+    if (email is null || password is null)
+    {
+        Console.WriteLine("Invalid choice. Please enter 1, 2 or 3.");
+        continue;
+    }
+
+    loginData = await SignInAsync(email, password);
+    if (loginData is not null)
+        break;
+}
+#else
+while (true)
+{
+    Console.Write("Email: ");
+    var email = Console.ReadLine();
+
+    Console.Write("Password: ");
+    var password = Console.ReadLine();
+
+    if (email is null || password is null)
+        continue;
+
+    loginData = await SignInAsync(email, password);
+    if (loginData is not null)
+        break;
+}
+#endif
+
 var token = loginData!.AccessToken;
 
-Console.WriteLine($"\nLogin successful.");
+Console.WriteLine("\nLogin successful.");
 Console.WriteLine($"Token: {token[..40]}...\n");
 
 Console.WriteLine("Write 1 to get profile: ");
@@ -176,91 +236,9 @@ while (true)
 
     if (Input == "3")
     {
-        Console.Write("\nName: ");
-        var name = Console.ReadLine()!;
-
-        int age;
-        while (true)
-        {
-            Console.Write("Age: ");
-            if (int.TryParse(Console.ReadLine(), out age) && age >= 0)
-                break;
-            Console.WriteLine("Please enter a valid non-negative number.");
-        }
-
-        int grade;
-        while (true)
-        {
-            Console.Write("Grade: ");
-            if (int.TryParse(Console.ReadLine(), out grade) && grade >= 0)
-                break;
-            Console.WriteLine("Please enter a valid non-negative number.");
-        }
-
-        Console.Write("Email: ");
-        var email = Console.ReadLine()!;
-
-        Console.Write("Password: ");
-        var password = Console.ReadLine()!;
-
-        string role;
-        while (true)
-        {
-            Console.Write("Role (1 = Student, 2 = Admin): ");
-            var roleChoice = Console.ReadLine();
-
-            if (roleChoice == "1")
-            {
-                role = "Student";
-                break;
-            }
-
-            if (roleChoice == "2")
-            {
-                role = "Admin";
-                break;
-            }
-
-            Console.WriteLine("Please enter 1 for Student or 2 for Admin.");
-        }
-
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         try
         {
-            using var addResponse = await client.PostAsJsonAsync("api/Students",
-                new CreateStudentRequest
-                {
-                    Name = name,
-                    Age = age,
-                    Grade = grade,
-                    Email = email,
-                    Password = password,
-                    Role = role
-                });
-
-            if (addResponse.IsSuccessStatusCode)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\nStudent added successfully!");
-                Console.ResetColor();
-            }
-            else if (addResponse.StatusCode == HttpStatusCode.Forbidden)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\nAccess denied: adding students requires an admin account.");
-                Console.ResetColor();
-            }
-            else if (addResponse.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                Console.WriteLine("\nYour session is not authenticated. Please renew your access token (option 5) or log in again.");
-            }
-            else
-            {
-                Console.WriteLine($"\nFailed to add student: {addResponse.StatusCode}");
-                var error = await addResponse.Content.ReadAsStringAsync();
-                Console.WriteLine(error);
-            }
+            await AddStudentAsync();
         }
         catch (HttpRequestException)
         {
@@ -276,70 +254,9 @@ while (true)
 
     if (Input == "4")
     {
-        int updateId;
-        while (true)
-        {
-            Console.Write("\nStudent ID to update: ");
-            if (int.TryParse(Console.ReadLine(), out updateId) && updateId >= 1)
-                break;
-            Console.WriteLine("Please enter a valid student ID.");
-        }
-
-        Console.Write("Name: ");
-        var newName = Console.ReadLine()!;
-
-        int newAge;
-        while (true)
-        {
-            Console.Write("Age: ");
-            if (int.TryParse(Console.ReadLine(), out newAge) && newAge >= 0)
-                break;
-            Console.WriteLine("Please enter a valid non-negative number.");
-        }
-
-        int newGrade;
-        while (true)
-        {
-            Console.Write("Grade: ");
-            if (int.TryParse(Console.ReadLine(), out newGrade) && newGrade >= 0)
-                break;
-            Console.WriteLine("Please enter a valid non-negative number.");
-        }
-
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         try
         {
-            using var updateResponse = await client.PutAsJsonAsync($"api/Students/{updateId}",
-                new UpdateStudentRequest
-                {
-                    Name = newName,
-                    Age = newAge,
-                    Grade = newGrade
-                });
-
-            if (updateResponse.IsSuccessStatusCode)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\nStudent updated successfully!");
-                Console.ResetColor();
-            }
-            else if (updateResponse.StatusCode == HttpStatusCode.Forbidden)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\nAccess denied: updating students requires an admin account.");
-                Console.ResetColor();
-            }
-            else if (updateResponse.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                Console.WriteLine("\nYour session is not authenticated. Please renew your access token (option 5) or log in again.");
-            }
-            else
-            {
-                Console.WriteLine($"\nFailed to update student: {updateResponse.StatusCode}");
-                var error = await updateResponse.Content.ReadAsStringAsync();
-                Console.WriteLine(error);
-            }
+            await UpdateStudentAsync();
         }
         catch (HttpRequestException)
         {
@@ -389,5 +306,189 @@ while (true)
 
         Console.WriteLine();
     }
+
+void PrintCancelled(string operation) =>
+    Console.WriteLine($"\n{operation} cancelled.");
+
+// Reads the role choice; returns null when the user cancels.
+string? ReadRoleOrCancel()
+{
+    while (true)
+    {
+        var roleChoice = ReadLineOrCancel("Role (1 = Student, 2 = Admin): ");
+
+        if (roleChoice is null)
+            return null;
+
+        if (roleChoice == "1")
+            return "Student";
+
+        if (roleChoice == "2")
+            return "Admin";
+
+        Console.WriteLine("Please enter 1 for Student or 2 for Admin.");
+    }
+}
+
+// Reads a line of input; returns null when the user types "c" or "cancel" to abort the current operation.
+string? ReadLineOrCancel(string prompt)
+{
+    Console.Write(prompt);
+    var input = Console.ReadLine();
+
+    return input is not null &&
+           (input.Trim().Equals("c", StringComparison.OrdinalIgnoreCase) ||
+            input.Trim().Equals("cancel", StringComparison.OrdinalIgnoreCase))
+        ? null
+        : input;
+}
+
+// Reads an integer with a minimum allowed value; returns null when the user cancels.
+int? ReadIntOrCancel(string prompt, int min)
+{
+    while (true)
+    {
+        var input = ReadLineOrCancel(prompt);
+
+        if (input is null)
+            return null;
+
+        if (int.TryParse(input, out var value) && value >= min)
+            return value;
+
+        Console.WriteLine($"Please enter a valid number greater than or equal to {min}.");
+    }
+}
+
+async Task AddStudentAsync()
+{
+    Console.WriteLine("\n(Type 'c' at any prompt to cancel)");
+
+    var name = ReadLineOrCancel("Name: ");
+    if (name is null) { PrintCancelled("Add student"); return; }
+
+    var age = ReadIntOrCancel("Age: ", 0);
+    if (age is null) { PrintCancelled("Add student"); return; }
+
+    var grade = ReadIntOrCancel("Grade: ", 0);
+    if (grade is null) { PrintCancelled("Add student"); return; }
+
+    var email = ReadLineOrCancel("Email: ");
+    if (email is null) { PrintCancelled("Add student"); return; }
+
+    var password = ReadLineOrCancel("Password: ");
+    if (password is null) { PrintCancelled("Add student"); return; }
+
+    var role = ReadRoleOrCancel();
+    if (role is null) { PrintCancelled("Add student"); return; }
+
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+    try
+    {
+        using var addResponse = await client.PostAsJsonAsync("api/Students",
+            new CreateStudentRequest
+            {
+                Name = name,
+                Age = age.Value,
+                Grade = grade.Value,
+                Email = email,
+                Password = password,
+                Role = role
+            });
+
+        if (addResponse.IsSuccessStatusCode)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\nStudent added successfully!");
+            Console.ResetColor();
+        }
+        else if (addResponse.StatusCode == HttpStatusCode.Forbidden)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nAccess denied: adding students requires an admin account.");
+            Console.ResetColor();
+        }
+        else if (addResponse.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Console.WriteLine("\nYour session is not authenticated. Please renew your access token (option 5) or log in again.");
+        }
+        else
+        {
+            Console.WriteLine($"\nFailed to add student: {addResponse.StatusCode}");
+            var error = await addResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(error);
+        }
+    }
+    catch (HttpRequestException)
+    {
+        Console.WriteLine("\nLost connection to the API server.");
+    }
+    catch (TaskCanceledException)
+    {
+        Console.WriteLine("\nThe API server stopped responding (timeout).");
+    }
+}
+
+async Task UpdateStudentAsync()
+{
+    Console.WriteLine("\n(Type 'c' at any prompt to cancel)");
+
+    var updateId = ReadIntOrCancel("Student ID to update: ", 1);
+    if (updateId is null) { PrintCancelled("Update student"); return; }
+
+    var newName = ReadLineOrCancel("Name: ");
+    if (newName is null) { PrintCancelled("Update student"); return; }
+
+    var newAge = ReadIntOrCancel("Age: ", 0);
+    if (newAge is null) { PrintCancelled("Update student"); return; }
+
+    var newGrade = ReadIntOrCancel("Grade: ", 0);
+    if (newGrade is null) { PrintCancelled("Update student"); return; }
+
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+    try
+    {
+        using var updateResponse = await client.PutAsJsonAsync($"api/Students/{updateId.Value}",
+            new UpdateStudentRequest
+            {
+                Name = newName,
+                Age = newAge.Value,
+                Grade = newGrade.Value
+            });
+
+        if (updateResponse.IsSuccessStatusCode)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\nStudent updated successfully!");
+            Console.ResetColor();
+        }
+        else if (updateResponse.StatusCode == HttpStatusCode.Forbidden)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nAccess denied: updating students requires an admin account.");
+            Console.ResetColor();
+        }
+        else if (updateResponse.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Console.WriteLine("\nYour session is not authenticated. Please renew your access token (option 5) or log in again.");
+        }
+        else
+        {
+            Console.WriteLine($"\nFailed to update student: {updateResponse.StatusCode}");
+            var error = await updateResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(error);
+        }
+    }
+    catch (HttpRequestException)
+    {
+        Console.WriteLine("\nLost connection to the API server.");
+    }
+    catch (TaskCanceledException)
+    {
+        Console.WriteLine("\nThe API server stopped responding (timeout).");
+    }
+}
 
 }
