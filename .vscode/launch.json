@@ -4,12 +4,14 @@
     {
       "name": "API",
       "type": "dotnet",
+      //"type": "coreclr",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/MyFirstRestAPI_Project/MyFirstRestAPI_Project.csproj"
+      "projectPath": "${workspaceFolder}/StudentBackend/Api/Api.csproj"
     },
     {
       "name": "Client",
       "type": "dotnet",
+      //"type": "coreclr",
       "request": "launch",
       "projectPath": "${workspaceFolder}/StudentFrontend/Console/Console.csproj"
     }

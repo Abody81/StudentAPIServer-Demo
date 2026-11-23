@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
-using StudentApi.Shared;
-using StudentApi.Shared.Requests;
-using StudentApi.Shared.Responses;
+using StudentShared;
+using StudentShared.Requests;
+using StudentShared.Responses;
 
 var handler = new HttpClientHandler
 {

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../StudentApi.Shared/StudentApi.Shared.csproj" />
+    <ProjectReference Include="../../StudentShared/StudentShared.csproj" />
   </ItemGroup>
 
 </Project>
