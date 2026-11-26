@@ -1,9 +1,11 @@
 using StudentApi.Backend.Extensions;
 using Scalar.AspNetCore;
+using StudentBackend.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Composition root: each subsystem lives in its own extension under Extensions/.
+builder.Services.AddInfrastructure(builder.Configuration);
 builder.AddAuditLogging();                // Serilog: console + app/warnings/errors files
 builder.AddJwtAuthentication();           // JWT bearer + StudentOwnerOrAdmin policy
 builder.Services.AddApiRateLimiting();    // AuthLimiter / ApiLimiter / HeavyLimiter
