@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: students-db
+    environment:
+      POSTGRES_USER: studentapi
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: students
+    ports:
+      - "5433:5432"
+    volumes:
+      - students-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studentapi -d students"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  students-db-data:
