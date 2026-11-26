@@ -29,7 +29,7 @@ public class AuthController(IOptions<JwtSettings> jwtSettings, ILogger<AuthContr
         return Convert.ToBase64String(bytes);
     }
 
-   
+
     private static string MaskEmail(string email)
     {
         var at = email.IndexOf('@');

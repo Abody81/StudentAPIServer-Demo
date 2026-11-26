@@ -74,9 +74,9 @@ namespace StudentBackend.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<StudentDto>> GetStudentById(int id)
+        public async Task<ActionResult<StudentDto>> GetStudentById(Guid id)
         {
-            if (id < 1)
+            if (id == Guid.Empty)
             {
                 return BadRequest($"Not accepted ID {id}");
             }
@@ -118,7 +118,7 @@ namespace StudentBackend.API.Controllers
 
             var newStudent = new Student
             {
-                Id = StudentDataSimulation.StudentsList.Count > 0 ? StudentDataSimulation.StudentsList.Max(s => s.Id) + 1 : 1,
+                Id = Guid.NewGuid(),
                 Name = request.Name,
                 Age = request.Age,
                 Grade = request.Grade,
@@ -142,9 +142,9 @@ namespace StudentBackend.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult DeleteStudent(int id)
+        public ActionResult DeleteStudent(Guid id)
         {
-            if (id < 1)
+            if (id == Guid.Empty)
             {
                 logger.LogWarning("Student delete REJECTED: invalid id {StudentId} by user {Actor}", id, Actor);
                 return BadRequest($"Not accepted ID {id}");
@@ -176,9 +176,9 @@ namespace StudentBackend.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<StudentDto> UpdateStudent(int id, UpdateStudentRequest request)
+        public ActionResult<StudentDto> UpdateStudent(Guid id, UpdateStudentRequest request)
         {
-            if (id < 1 || request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
+            if (id == Guid.Empty || request == null || string.IsNullOrEmpty(request.Name) || request.Age < 0 || request.Grade < 0)
             {
                 logger.LogWarning("Student update REJECTED: invalid data (id {StudentId}) by user {Actor}", id, Actor);
                 return BadRequest("Invalid student data.");

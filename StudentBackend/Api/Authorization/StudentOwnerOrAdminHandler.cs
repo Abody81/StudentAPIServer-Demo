@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace StudentApi.Backend.Authorization;
 
-public class StudentOwnerOrAdminHandler : AuthorizationHandler<StudentOwnerOrAdminRequirement, int>
+public class StudentOwnerOrAdminHandler : AuthorizationHandler<StudentOwnerOrAdminRequirement, Guid>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, StudentOwnerOrAdminRequirement requirement, int studentId)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, StudentOwnerOrAdminRequirement requirement, Guid studentId)
     {
         if (context.User.IsInRole("Admin"))
         {
@@ -15,7 +15,7 @@ public class StudentOwnerOrAdminHandler : AuthorizationHandler<StudentOwnerOrAdm
 
         var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (int.TryParse(userId, out int authenticatedStudentId) && studentId == authenticatedStudentId)
+        if (Guid.TryParse(userId, out Guid authenticatedStudentId) && studentId == authenticatedStudentId)
         {
             context.Succeed(requirement);
         }

@@ -1,3 +1,3 @@
 namespace StudentShared.Requests;
 
-public record LogoutRequest(int Id, string RefreshToken);
+public record LogoutRequest(Guid Id, string RefreshToken);

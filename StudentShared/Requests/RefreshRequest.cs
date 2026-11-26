@@ -1,3 +1,3 @@
 namespace StudentShared.Requests;
 
-public record RefreshRequest(int Id, string RefreshToken);
+public record RefreshRequest(Guid Id, string RefreshToken);

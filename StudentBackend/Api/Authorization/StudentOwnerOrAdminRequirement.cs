@@ -9,5 +9,5 @@ namespace StudentApi.Backend.Authorization;
 
 public class StudentOwnerOrAdminRequirement : IAuthorizationRequirement
 {
-    
+
 }
